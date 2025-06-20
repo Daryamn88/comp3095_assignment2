@@ -1,0 +1,108 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8180/auth/realms/GBC_Realm/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8180/auth/realms/GBC_Realm
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      # Global CORS configuration
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "*"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
+
+      # Default filters applied to all routes
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+        - name: RequestValidationFilter
+          args:
+            validate-headers: false
+            require-user-agent: false
+            validate-content-type: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+    urls:
+      - name: API Gateway
+        url: /v3/api-docs
+      - name: Course Service (via Gateway)
+        url: /swagger/course-service-docs/
+      - name: Assignment Service (via Gateway)
+        url: /swagger/assignment-service-docs/
+      - name: Resource Service (via Gateway)
+        url: /swagger/resource-service-docs/
+  show-actuator: false
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.netflix.eureka: INFO
+    org.springframework.security: DEBUG
+    com.academicplanner.apigateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+keycloak:
+  realm: GBC_Realm
+  auth-server-url: http://localhost:8180/auth
+  ssl-required: external
+  resource: api-gateway
+  credentials:
+    secret: gateway-secret-key
+  use-resource-role-mappings: true
+  bearer-only: true

@@ -1,0 +1,117 @@
+spring:
+  application:
+    name: resource-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8180/auth/realms/GBC_Realm/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8180/auth/realms/GBC_Realm
+      client:
+        registration:
+          keycloak:
+            client-id: resource-service
+            client-secret: resource-service-secret
+            authorization-grant-type: client_credentials
+            scope: openid,profile,email
+        provider:
+          keycloak:
+            issuer-uri: http://localhost:8180/auth/realms/GBC_Realm
+
+  datasource:
+    url: jdbc:postgresql://localhost:5433/resource_db
+    username: resource_user
+    password: resource_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+server:
+  port: 8083
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+services:
+  course-service:
+    url: http://course-service
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failure-rate-threshold: 40
+        wait-duration-in-open-state: 25s
+        sliding-window-size: 8
+        minimum-number-of-calls: 4
+        permitted-number-of-calls-in-half-open-state: 2
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.lang.Exception
+    instances:
+      courseServiceForResources:
+        base-config: default
+        failure-rate-threshold: 35
+        wait-duration-in-open-state: 20s
+
+  retry:
+    configs:
+      default:
+        max-attempts: 2
+        wait-duration: 1s
+        exponential-backoff-multiplier: 1.5
+        retry-exceptions:
+          - java.lang.Exception
+    instances:
+      courseServiceForResources:
+        base-config: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,retries
+  endpoint:
+    health:
+      show-details: always
+    circuitbreakers:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+  show-actuator: false
+
+logging:
+  level:
+    com.academicplanner.resourceservice: DEBUG
+    org.springframework.cloud.netflix.eureka: INFO
+    org.springframework.security: DEBUG
+    io.github.resilience4j: DEBUG

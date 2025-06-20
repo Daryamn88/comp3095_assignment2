@@ -1,0 +1,265 @@
+{
+    "realm": "GBC_Realm",
+    "enabled": true,
+    "registrationAllowed": false,
+    "loginWithEmailAllowed": true,
+    "duplicateEmailsAllowed": false,
+    "resetPasswordAllowed": true,
+    "editUsernameAllowed": false,
+    "bruteForceProtected": true,
+    "permanentLockout": false,
+    "maxFailureWaitSeconds": 900,
+    "minimumQuickLoginWaitSeconds": 60,
+    "waitIncrementSeconds": 60,
+    "quickLoginCheckMilliSeconds": 1000,
+    "maxDeltaTimeSeconds": 43200,
+    "failureFactor": 30,
+    "defaultRoles": ["offline_access", "uma_authorization", "default-roles-gbc_realm"],
+    "requiredCredentials": ["password"],
+    "otpPolicyType": "totp",
+    "otpPolicyAlgorithm": "HmacSHA1",
+    "otpPolicyDigits": 6,
+    "otpPolicyLookAheadWindow": 1,
+    "otpPolicyPeriod": 30,
+    "otpPolicyCodeReusable": false,
+    "accessTokenLifespan": 300,
+    "accessTokenLifespanForImplicitFlow": 900,
+    "ssoSessionIdleTimeout": 1800,
+    "ssoSessionMaxLifespan": 36000,
+    "ssoSessionIdleTimeoutRememberMe": 0,
+    "ssoSessionMaxLifespanRememberMe": 0,
+    "offlineSessionIdleTimeout": 2592000,
+    "offlineSessionMaxLifespanEnabled": false,
+    "offlineSessionMaxLifespan": 5184000,
+    "clientSessionIdleTimeout": 0,
+    "clientSessionMaxLifespan": 0,
+    "clientOfflineSessionIdleTimeout": 0,
+    "clientOfflineSessionMaxLifespan": 0,
+    "accessCodeLifespan": 60,
+    "accessCodeLifespanUserAction": 300,
+    "accessCodeLifespanLogin": 1800,
+    "actionTokenGeneratedByAdminLifespan": 43200,
+    "actionTokenGeneratedByUserLifespan": 300,
+    "oauth2DeviceCodeLifespan": 600,
+    "oauth2DevicePollingInterval": 5,
+    "roles": {
+        "realm": [
+            {
+                "name": "ADMIN",
+                "description": "Administrator role with full access",
+                "composite": false,
+                "clientRole": false,
+                "containerId": "GBC_Realm"
+            },
+            {
+                "name": "STUDENT",
+                "description": "Student role with limited access",
+                "composite": false,
+                "clientRole": false,
+                "containerId": "GBC_Realm"
+            },
+            {
+                "name": "INSTRUCTOR",
+                "description": "Instructor role with course management access",
+                "composite": false,
+                "clientRole": false,
+                "containerId": "GBC_Realm"
+            }
+        ]
+    },
+    "clients": [
+        {
+            "clientId": "api-gateway",
+            "name": "API Gateway",
+            "description": "API Gateway client for routing and authentication",
+            "enabled": true,
+            "alwaysDisplayInConsole": false,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "gateway-secret-key",
+            "redirectUris": ["http://localhost:8080/*"],
+            "webOrigins": ["http://localhost:8080", "http://localhost:3000"],
+            "notBefore": 0,
+            "bearerOnly": false,
+            "consentRequired": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": true,
+            "serviceAccountsEnabled": true,
+            "publicClient": false,
+            "frontchannelLogout": false,
+            "protocol": "openid-connect",
+            "fullScopeAllowed": true,
+            "nodeReRegistrationTimeout": -1,
+            "defaultClientScopes": ["web-origins", "role_list", "profile", "roles", "email"],
+            "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+        },
+        {
+            "clientId": "course-service",
+            "name": "Course Service",
+            "description": "Course management microservice",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "course-service-secret",
+            "bearerOnly": true,
+            "standardFlowEnabled": false,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": false,
+            "serviceAccountsEnabled": true,
+            "publicClient": false,
+            "protocol": "openid-connect",
+            "fullScopeAllowed": false,
+            "defaultClientScopes": ["role_list", "profile", "roles", "email"]
+        },
+        {
+            "clientId": "assignment-service",
+            "name": "Assignment Service",
+            "description": "Assignment management microservice",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "assignment-service-secret",
+            "bearerOnly": true,
+            "standardFlowEnabled": false,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": false,
+            "serviceAccountsEnabled": true,
+            "publicClient": false,
+            "protocol": "openid-connect",
+            "fullScopeAllowed": false,
+            "defaultClientScopes": ["role_list", "profile", "roles", "email"]
+        },
+        {
+            "clientId": "resource-service",
+            "name": "Resource Service",
+            "description": "Resource management microservice",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "resource-service-secret",
+            "bearerOnly": true,
+            "standardFlowEnabled": false,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": false,
+            "serviceAccountsEnabled": true,
+            "publicClient": false,
+            "protocol": "openid-connect",
+            "fullScopeAllowed": false,
+            "defaultClientScopes": ["role_list", "profile", "roles", "email"]
+        },
+        {
+            "clientId": "academic-planner-frontend",
+            "name": "Academic Planner Frontend",
+            "description": "Frontend application for students and administrators",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "frontend-secret",
+            "redirectUris": ["http://localhost:3000/*", "http://localhost:8080/*"],
+            "webOrigins": ["http://localhost:3000", "http://localhost:8080"],
+            "bearerOnly": false,
+            "consentRequired": false,
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false,
+            "directAccessGrantsEnabled": true,
+            "serviceAccountsEnabled": false,
+            "publicClient": false,
+            "protocol": "openid-connect",
+            "fullScopeAllowed": true,
+            "defaultClientScopes": ["web-origins", "role_list", "profile", "roles", "email"]
+        }
+    ],
+    "users": [
+        {
+            "username": "admin",
+            "enabled": true,
+            "totp": false,
+            "emailVerified": true,
+            "firstName": "System",
+            "lastName": "Administrator",
+            "email": "admin@gbc.ca",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "admin123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": ["ADMIN"],
+            "clientRoles": {},
+            "groups": []
+        },
+        {
+            "username": "instructor1",
+            "enabled": true,
+            "totp": false,
+            "emailVerified": true,
+            "firstName": "John",
+            "lastName": "Professor",
+            "email": "instructor1@gbc.ca",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "instructor123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": ["INSTRUCTOR"],
+            "clientRoles": {},
+            "groups": []
+        },
+        {
+            "username": "student1",
+            "enabled": true,
+            "totp": false,
+            "emailVerified": true,
+            "firstName": "Alice",
+            "lastName": "Johnson",
+            "email": "student1@gbc.ca",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "student123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": ["STUDENT"],
+            "clientRoles": {},
+            "groups": []
+        },
+        {
+            "username": "student2",
+            "enabled": true,
+            "totp": false,
+            "emailVerified": true,
+            "firstName": "Bob",
+            "lastName": "Smith",
+            "email": "student2@gbc.ca",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "student123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": ["STUDENT"],
+            "clientRoles": {},
+            "groups": []
+        }
+    ],
+    "scopeMappings": [],
+    "clientScopeMappings": {},
+    "groups": [
+        {
+            "name": "Administrators",
+            "path": "/Administrators",
+            "realmRoles": ["ADMIN"]
+        },
+        {
+            "name": "Instructors",
+            "path": "/Instructors",
+            "realmRoles": ["INSTRUCTOR"]
+        },
+        {
+            "name": "Students",
+            "path": "/Students",
+            "realmRoles": ["STUDENT"]
+        }
+    ]
+}

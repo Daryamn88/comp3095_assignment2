@@ -1,0 +1,47 @@
+# Place this file in src/test/resources/application-test.yml for both services
+
+spring:
+  profiles:
+    active: test
+
+  # Disable Eureka for tests
+  cloud:
+    discovery:
+      enabled: false
+
+  # Disable service registration
+  eureka:
+    client:
+      enabled: false
+
+# Test logging configuration
+logging:
+  level:
+    root: INFO
+    com.academicplanner: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.keycloak: INFO
+    io.github.resilience4j: INFO
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+
+# Disable actuator endpoints for tests
+management:
+  endpoints:
+    enabled-by-default: false
+
+# Resilience4j test configuration
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        minimum-number-of-calls: 3
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+  retry:
+    configs:
+      default:
+        max-attempts: 2
+        wait-duration: 500ms

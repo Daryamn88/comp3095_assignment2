@@ -1,0 +1,80 @@
+{
+    "realm": "test-realm",
+    "enabled": true,
+    "registrationAllowed": false,
+    "loginWithEmailAllowed": true,
+    "duplicateEmailsAllowed": false,
+    "resetPasswordAllowed": false,
+    "editUsernameAllowed": false,
+    "bruteForceProtected": false,
+    "sslRequired": "external",
+    "eventsEnabled": false,
+    "eventsExpiration": 900,
+    "accessTokenLifespan": 600,
+    "accessTokenLifespanForImplicitFlow": 900,
+    "ssoSessionIdleTimeout": 1800,
+    "ssoSessionMaxLifespan": 36000,
+    "offlineSessionIdleTimeout": 2592000,
+    "offlineSessionMaxLifespanEnabled": false,
+    "offlineSessionMaxLifespan": 5184000,
+    "clientSessionIdleTimeout": 0,
+    "clientSessionMaxLifespan": 0,
+    "accessCodeLifespan": 60,
+    "accessCodeLifespanUserAction": 300,
+    "accessCodeLifespanLogin": 1800,
+    "actionTokenGeneratedByAdminLifespan": 43200,
+    "actionTokenGeneratedByUserLifespan": 300,
+    "roles": {
+        "realm": [
+            {
+                "name": "ADMIN",
+                "description": "Administrator role with full access",
+                "composite": false,
+                "clientRole": false
+            },
+            {
+                "name": "STUDENT",
+                "description": "Student role with limited access",
+                "composite": false,
+                "clientRole": false
+            },
+            {
+                "name": "INSTRUCTOR",
+                "description": "Instructor role with course management access",
+                "composite": false,
+                "clientRole": false
+            }
+        ]
+    },
+    "defaultRoles": ["offline_access", "uma_authorization"],
+    "clients": [
+        {
+            "clientId": "course-service",
+            "name": "Course Service Test Client",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "course-service-secret",
+            "serviceAccountsEnabled": true,
+            "directAccessGrantsEnabled": true,
+            "publicClient": false,
+            "protocol": "openid-connect",
+            "fullScopeAllowed": true,
+            "defaultClientScopes": ["web-origins", "role_list", "profile", "roles", "email"],
+            "optionalClientScopes": ["address", "phone", "offline_access"]
+        },
+        {
+            "clientId": "assignment-service",
+            "name": "Assignment Service Test Client",
+            "enabled": true,
+            "clientAuthenticatorType": "client-secret",
+            "secret": "assignment-service-secret",
+            "serviceAccountsEnabled": true,
+            "directAccessGrantsEnabled": true,
+            "publicClient": false,
+            "protocol": "openid-connect",
+            "fullScopeAllowed": true,
+            "defaultClientScopes": ["web-origins", "role_list", "profile", "roles", "email"],
+            "optionalClientScopes": ["address", "phone", "offline_access"]
+        }
+    ]
+}

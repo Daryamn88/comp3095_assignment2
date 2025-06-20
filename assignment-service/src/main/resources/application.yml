@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: assignment-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://keycloak:8080/realms/GBC_Realm/protocol/openid-connect/certs
+          issuer-uri: http://keycloak:8080/realms/GBC_Realm
+      client:
+        registration:
+          keycloak:
+            client-id: assignment-service
+            client-secret: assignment-service-secret
+            authorization-grant-type: client_credentials
+            scope: openid,profile,email
+        provider:
+          keycloak:
+            issuer-uri: http://keycloak:8080/realms/GBC_Realm
+
+  data:
+    mongodb:
+      uri: mongodb://assignment-mongo:27017/assignment_db
+
+server:
+  port: 8082
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+services:
+  course-service:
+    url: http://course-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+    filter: true
+  show-actuator: false
+
+logging:
+  level:
+    com.academicplanner.assignmentservice: DEBUG
+    org.springframework.cloud.netflix.eureka: INFO
+    org.springframework.security: DEBUG
+    org.springframework.data.mongodb: DEBUG

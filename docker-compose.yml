@@ -1,0 +1,266 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for Keycloak
+  keycloak-postgres:
+    image: postgres:16.1
+    container_name: keycloak-postgres
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgresql/data
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U keycloak -d keycloak" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Keycloak Server
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+#      KC_HOSTNAME: keycloak
+#      KC_HOSTNAME_PORT: 8080
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT_HTTPS: false
+    ports:
+      - "8180:8080"
+    command:
+      - start-dev
+      - --import-realm
+    volumes:
+      - ./keycloak/gbc-realm.json:/opt/keycloak/data/import/gbc-realm.json
+    depends_on:
+      - keycloak-postgres
+#        condition: service_healthy
+    networks:
+      - academic-planner-network
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+#      interval: 10s
+#      timeout: 10s
+#      retries: 5
+    restart: on-failure
+
+  # Eureka Server (Service Discovery)
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    restart: on-failure
+
+  # API Gateway
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: on-failure
+
+  # PostgreSQL for Course Service
+  course-postgres:
+    image: postgres:16.1
+    container_name: course-postgres
+    environment:
+      POSTGRES_DB: course_db
+      POSTGRES_USER: course_user
+      POSTGRES_PASSWORD: course_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - course_postgres_data:/var/lib/postgresql/data
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U course_user -d course_db"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL for Resource Service
+  resource-postgres:
+    image: postgres:16.1
+    container_name: resource-postgres
+    environment:
+      POSTGRES_DB: resource_db
+      POSTGRES_USER: resource_user
+      POSTGRES_PASSWORD: resource_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - resource_postgres_data:/var/lib/postgresql/data
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resource_user -d resource_db"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # MongoDB for Assignment Service
+  assignment-mongo:
+    image: mongo:7.0
+    container_name: assignment-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - assignment_mongo_data:/data/db
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Redis for Caching
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # Course Service
+  course-service:
+    build: ./course-service
+#    container_name: course-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://course-postgres:5432/course_db
+      SPRING_DATASOURCE_USERNAME: course_user
+      SPRING_DATASOURCE_PASSWORD: course_password
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: true
+      # OAuth2 Configuration for container networking
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI: http://keycloak:8080/realms/GBC_Realm/protocol/openid-connect/certs
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: http://keycloak:8080/realms/GBC_Realm
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER-URI: http://keycloak:8080/realms/GBC_Realm
+    depends_on:
+      course-postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: on-failure
+#    deploy:
+#      replicas: 2  # Multiple instances for load balancing
+
+  # Assignment Service
+  assignment-service:
+    build: ./assignment-service
+    container_name: assignment-service
+    environment:
+      SPRING_DATA_MONGODB_HOST: assignment-mongo
+      SPRING_DATA_MONGODB_PORT: 27017
+      SPRING_DATA_MONGODB_DATABASE: assignment_db
+      SPRING_DATA_MONGODB_USERNAME: assignment_user
+      SPRING_DATA_MONGODB_PASSWORD: assignment_password
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SERVICES_COURSE-SERVICE_URL: http://course-service
+      # OAuth2 Configuration for container networking
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK-SET-URI: http://keycloak:8080/realms/GBC_Realm/protocol/openid-connect/certs
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER-URI: http://keycloak:8080/realms/GBC_Realm
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_ISSUER-URI: http://keycloak:8080/realms/GBC_Realm
+    depends_on:
+      assignment-mongo:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+#    restart: on-failure
+
+  # Resource Service
+  resource-service:
+    build: ./resource-service
+    container_name: resource-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://resource-postgres:5432/resource_db
+      SPRING_DATASOURCE_USERNAME: resource_user
+      SPRING_DATASOURCE_PASSWORD: resource_password
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SERVICES_COURSE-SERVICE_URL: http://course-service
+    depends_on:
+      resource-postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      course-service:
+        condition: service_healthy
+    networks:
+      - academic-planner-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: on-failure
+
+volumes:
+  keycloak_postgres_data:
+  course_postgres_data:
+  resource_postgres_data:
+  assignment_mongo_data:
+  redis_data:
+
+networks:
+  academic-planner-network:
+    driver: bridge
